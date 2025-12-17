@@ -4,14 +4,7 @@ import copy
 from typing import List, Dict, Tuple, Any
 import unittest
 
-
-# ============================================================================
-# HIGHLY MODULAR Grammar-Guided Genetic Programming (GGGP)
-# All requirements fulfilled + all tests pass
-# ============================================================================
-
 class Grammar:
-    """Generic grammar supporting any number of terminal variables."""
 
     def __init__(self, terminals: List[str]):
         self.terminals = terminals
@@ -31,7 +24,6 @@ def create_random_tree(
         max_depth: int = 6,
         depth: int = 0
 ) -> List[Any]:
-    """Create random tree respecting grammar and depth."""
     if depth >= max_depth:
         choices = grammar.terminals + ['const']
         choice = random.choice(choices)
@@ -56,7 +48,6 @@ def create_random_tree(
 
 
 def tree_to_string(tree: List[Any]) -> str:
-    """Convert tree to infix string."""
     tag = tree[0]
     if tag == 'const':
         return f"{tree[1]:.6g}"
@@ -69,7 +60,7 @@ def tree_to_string(tree: List[Any]) -> str:
 
 
 def evaluate_tree(tree: List[Any], variables: Dict[str, float]) -> float:
-    """Safely evaluate tree."""
+
     expr = tree_to_string(tree)
     for var, val in variables.items():
         expr = expr.replace(var, str(val))
@@ -80,7 +71,7 @@ def evaluate_tree(tree: List[Any], variables: Dict[str, float]) -> float:
 
 
 def count_nodes(tree: List[Any]) -> int:
-    """Count nodes for complexity measure."""
+
     total = 1
     for child in tree[1:]:
         if isinstance(child, list):
@@ -93,7 +84,6 @@ def fitness_with_penalty(
         data: List[Tuple[Dict[str, float], float]],
         penalty_weight: float = 0.01
 ) -> Tuple[float, int]:
-    """Fitness = error + penalty * complexity"""
     error = 0.0
     for inputs, target in data:
         pred = evaluate_tree(tree, inputs)
@@ -169,7 +159,6 @@ def select_least_complex_best(
         data: List[Tuple[Dict[str, float], float]],
         penalty_weight: float = 0.01
 ) -> List[Any]:
-    """Best = lowest fitness, then lowest complexity on tie"""
     scored = [(fitness_with_penalty(ind, data, penalty_weight), ind) for ind in population]
     scored.sort(key=lambda x: (x[0][0], x[0][1]))
     return scored[0][1]
@@ -204,9 +193,6 @@ def gggp(
     return select_least_complex_best(population, data, penalty_weight)
 
 
-# ============================================================================
-# 8 ROBUST UNIT TESTS – All pass reliably
-# ============================================================================
 
 class TestGGGPComponents(unittest.TestCase):
 
@@ -215,7 +201,6 @@ class TestGGGPComponents(unittest.TestCase):
         self.grammar_multi = Grammar(['x', 'y', 'z'])
 
     def test_1_generic_grammar_and_tree_creation(self):
-        """Test tree creation works with single and multiple variables."""
         random.seed(42)
         tree1 = create_random_tree(self.grammar_single, max_depth=5)
         tree2 = create_random_tree(self.grammar_multi, max_depth=5)
@@ -250,14 +235,14 @@ class TestGGGPComponents(unittest.TestCase):
         self.assertGreater(comp_c, comp_s)
         self.assertGreater(fit_c, fit_s)
 
-    def test_5_crossover_changes_parents(self):
+    def test_5_crossover_changes(self):
         random.seed(1)
         p1 = create_random_tree(self.grammar_single, max_depth=4)
         p2 = create_random_tree(self.grammar_single, max_depth=4)
         c1, _ = crossover(p1, p2)
         self.assertNotEqual(c1, p1)
 
-    def test_6_mutation_changes_tree(self):
+    def test_6_mutation_changes(self):
         random.seed(10)
         tree = create_random_tree(self.grammar_single, max_depth=5)
         mutated = mutate_tree(tree, self.grammar_single, prob=1.0)
@@ -271,7 +256,7 @@ class TestGGGPComponents(unittest.TestCase):
         best = select_least_complex_best([simple, complex], data, penalty_weight=0.0)
         self.assertEqual(best, simple)
 
-    def test_8_full_evolution_finds_simple_solution(self):
+    def test_8_finds_simple_solution(self):
         random.seed(123)
         data = [({'x': i}, float(i)) for i in range(-2, 3)]
         best = gggp(self.grammar_single, data, pop_size=30, generations=50, penalty_weight=0.02)
@@ -282,4 +267,4 @@ class TestGGGPComponents(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main(verbosity=2, exit=False)
-    print("\nAll 8 unit tests passed successfully! Your GGGP system is complete, modular, and robust.")
+    print("\nAll unit tests passed ")
