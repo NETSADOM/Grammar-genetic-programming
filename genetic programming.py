@@ -60,14 +60,38 @@ def tree_to_string(tree: List[Any]) -> str:
 
 
 def evaluate_tree(tree: List[Any], variables: Dict[str, float]) -> float:
+    tag = tree[0]
 
-    expr = tree_to_string(tree)
-    for var, val in variables.items():
-        expr = expr.replace(var, str(val))
-    try:
-        return eval(expr, {"__builtins__": {}})
-    except Exception:
-        return float('inf')
+    if tag == 'const':
+        return tree[1]
+
+    if tag == 'var':
+        return variables.get(tree[1], 0.0)
+
+    if tag == 'expr' or tag == 'term':
+        if len(tree) == 2:
+            return evaluate_tree(tree[1], variables)
+
+        left = evaluate_tree(tree[1], variables)
+        op = tree[2][1]
+        right = evaluate_tree(tree[3], variables)
+
+        try:
+            if op == '+':
+                return left + right
+            if op == '-':
+                return left - right
+            if op == '*':
+                return left * right
+            if op == '/':
+                return left / right if abs(right) > 1e-12 else float('inf')
+        except Exception:
+            return float('inf')
+
+    if tag == 'factor':
+        return evaluate_tree(tree[1], variables)
+
+    return float('inf')
 
 
 def count_nodes(tree: List[Any]) -> int:
@@ -265,6 +289,21 @@ class TestGGGPComponents(unittest.TestCase):
         self.assertLess(complexity, 25)
 
 
+def demo():
+    random.seed(123)
+
+    grammar = Grammar(['x'])
+    data = [({'x': i}, float(i)) for i in range(-5, 6)]
+
+    best = gggp(grammar, data, pop_size=30, generations=50, penalty_weight=0.02)
+
+    print("Expression:", tree_to_string(best))
+
+    for x in range(-3, 4):
+        print(f"x={x:2d} → {evaluate_tree(best, {'x': x})}")
+
 if __name__ == '__main__':
+    print("=== Running Unit Tests ===")
     unittest.main(verbosity=2, exit=False)
-    print("\nAll unit tests passed ")
+    demo()
+
